@@ -40,7 +40,7 @@ export default class Menu extends Component {
 	constructor() {
 		super()
 		this.state = {
-			Id: null,
+			Id: 'rt347',
 			partitions: [],
 			crap: 0,
 			textInput: '',
@@ -49,21 +49,31 @@ export default class Menu extends Component {
 			suryalist: [],
 			naveenPartition: 'A',
 			suryaPartition: 'A',
+			itemName: '',
+			itemPrice: 0,
+			shopName: '',
+			itemPartition: '',
+
 		}
 	}
-	componentDidMount() {
+	async componentDidMount() {
 		auth().onAuthStateChanged((user) => {
-			if (!user)
-				console.log("error has occured in authstatechanged ");
-			if (user) {
-				console.log("The is the user " + user);
-				let userName = user.email;
-				userName = userName.split("@")
-				if (userName[0].includes('.'))
-					userName[0] = userName[0].replace(/[.]/g, "+");
-				let Id = userName[0];
-				console.log(Id);
-			}
+			// if (!user)
+			// 	console.log("error has occured in authstatechanged ");
+			// if (user) {
+			// 	console.log("The is the user " + user);
+			// 	let userName = user.email;
+			// 	userName = userName.split("@")
+			// 	if (userName[0].includes('.'))
+			// 		userName[0] = userName[0].replace(/[.]/g, "+");
+			// 	let Id = userName[0];
+			// 	console.log(Id);
+
+
+			// }
+			//let Id = "rt347"
+			console.log(Id);
+			console.log("In auth chnage")
 		})
 		database().ref("/Items").on('value', (snapshot) => {
 			//console.log(snapshot.val());
@@ -127,11 +137,19 @@ export default class Menu extends Component {
 
 	}
 
-	// spendMoney = (itemName, itemPrice, shopName) => {
-	// 	console.log("suh dood");
-	// 	//database().ref("Budget/" + )
+	spendMoney = (boughtItem, boughtItemPrice, storeName, boughtItemPartition) => {
+		var today = new Date();
+		var date = today.getDate() + "-" + parseInt(today.getMonth() + 1) + "-" + today.getFullYear();
+		console.log(date);
+		console.log(typeof (date));
+		database().ref("Transactions/" + this.state.Id + "/" + date).push({
+			shopName: storeName,
+			itemName: boughtItem,
+			itemPrice: boughtItemPrice,
+			itemPartition: boughtItemPartition,
 
-	// }
+		})
+	}
 
 	render() {
 		return (
@@ -144,7 +162,6 @@ export default class Menu extends Component {
 						selectedValue={this.state.naveenPartition}
 						style={{ height: 50, width: 150 }}
 						onValueChange={(itemValue, itemIndex) => {
-							console.log("Picker bitch");
 							this.setState({ naveenPartition: itemValue })
 
 						}}
@@ -160,7 +177,7 @@ export default class Menu extends Component {
 						return (
 							<View style={{ flexDirection: 'row' }}>
 								<Text>{item.name} {" :  Rs."} {item.price}</Text>
-								<TouchableOpacity style={styles.button} onPress={() => { console.log("Naveen button pressed and the partition is = " + this.state.naveenPartition) }}>
+								<TouchableOpacity style={styles.button} onPress={() => { this.spendMoney(item.name, item.price, "Naveen's Tea Shop", this.state.naveenPartition) }}>
 									<Text>  >  </Text>
 								</TouchableOpacity>
 
@@ -172,7 +189,6 @@ export default class Menu extends Component {
 						selectedValue={this.state.suryaPartition}
 						style={{ height: 50, width: 150 }}
 						onValueChange={(itemValue, itemIndex) => {
-							console.log("Picker bitch");
 							this.setState({ suryaPartition: itemValue })
 
 						}}
@@ -189,7 +205,7 @@ export default class Menu extends Component {
 							<View style={{ flexDirection: 'row' }}>
 								<Text>{item.name} {" :  Rs."} {item.price}</Text>
 								{/* <Button title=">" onPress={() => { console.log("Button pressed") }} /> */}
-								<TouchableOpacity style={styles.button} onPress={() => { console.log("Surya Button pressed and the partition is =" + this.state.suryaPartition) }} >
+								<TouchableOpacity style={styles.button} onPress={() => { this.spendMoney(item.name, item.price, "Surya Tuck Shop", this.state.naveenPartition) }} >
 									<Text>  >  </Text>
 								</TouchableOpacity>
 
