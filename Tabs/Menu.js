@@ -45,14 +45,14 @@ export default class Menu extends Component {
 			crap: 0,
 			textInput: '',
 			toggle: false,
-			naveenlist: [],
-			suryalist: [],
-			naveenPartition: 'A',
-			suryaPartition: 'A',
 			itemName: '',
 			itemPrice: 0,
 			shopName: '',
 			itemPartition: '',
+			addItemName: '',
+			addItemPrice: 0,
+			shopNames: [],
+			shopPartitions: [],
 
 		}
 	}
@@ -75,16 +75,17 @@ export default class Menu extends Component {
 			console.log(Id);
 			console.log("In auth chnage")
 		})
-		database().ref("/Items").on('value', (snapshot) => {
-			//console.log(snapshot.val());
+		await database().ref("/Items").on('value', (snapshot) => {
 			var shops = []
+			var snPartitions = []
 			snapshot.forEach((child) => {
 				shops.push(child.key);
-			})
-			console.log(shops);
-			for (let i = 0; i < shops.length; i++) {
-				if (snapshot.hasChild(shops[i])) {
-					var shopname = shops[i];
+				let temp = new Object()
+				temp.storeName = child.key
+				temp.pickerValue = 'A'
+
+				if (snapshot.hasChild(child.key)) {
+					var shopname = child.key;
 					var li = [];
 					snapshot.child(shopname).forEach((child) => {
 						li.push({
@@ -92,26 +93,13 @@ export default class Menu extends Component {
 							price: child.val(),
 						})
 					})
-					if (i == 0)
-						this.setState({ naveenlist: li });
-					else
-						this.setState({ suryalist: li });
-
+					temp.shopItemsList = li
 				}
+				snPartitions.push(temp)
 
-			}
-			//var li = []
-			// snapshot.forEach((subsnap) => {
-			// 	// console.log(subsnap.val());
 
-			// 	subsnap.forEach((child) => {
-			// 		li.push({
-			// 			name: child.key,
-			// 			price: child.val(),
-			// 		})
-			// 	})
-			// 	this.setState({ list: li })
-			// })
+			})
+			this.setState({ shopNames: shops, shopPartitions: snPartitions })
 
 		})
 	}
@@ -151,70 +139,77 @@ export default class Menu extends Component {
 		})
 	}
 
+	displayShopInfo = () => {
+		console.log("NEW BITCH")
+		return this.state.shopNames.map((name, index) => {
+			let shopName = name.toString()
+			let temp = new Object()
+			console.log(shopName)
+			return this.state.shopPartitions.map((store_details, index) => {
+				if (shopName.localeCompare(store_details.storeName) == 0) {
+					temp = store_details
+					console.log("inside if")
+					console.log(temp.shopItemsList)
+					return (
+						<View>
+							<View style={{ flexDirection: 'row' }}>
+								<Text>{shopName}</Text>
+								<Picker
+									selectedValue={temp.pickerValue}
+									style={{ height: 50, width: 150 }}
+									onValueChange={(itemValue, itemIndex) => {
+										temp.pickerValue = itemValue
+										this.setState((state) => {
+											let snPartitions = state.shopPartitions
+											snPartitions[index].pickerValue = itemValue
+											return {
+												snPartitions
+											}
+										})
+									}}>
+									<Picker.Item label="Partition A" value="A" />
+									<Picker.Item label="Partition B" value="B" />
+								</Picker>
+							</View>
+							<View style={{ flexDirection: 'row' }}>
+								<View style={{ flexDirection: 'column' }}>
+									{
+										<FlatList style={{ width: '100%' }}
+											data={temp.shopItemsList}
+											renderItem={({ item }) => {
+												return (
+													<View style={{ flexDirection: 'row' }}>
+														<Text>{item.name} {" :  Rs."} {item.price} </Text>
+														<TouchableOpacity style={styles.button} onPress={() => { this.spendMoney(item.name, item.price, shopName, temp.pickerValue) }}>
+															<Text>  >  </Text>
+														</TouchableOpacity>
+													</View>)
+											}} />
+
+									}
+								</View>
+							</View>
+							<Button title="Add" onPress={() => { console.log("Add button pressed") }} />
+						</View>
+					)
+				}
+				else
+					return null
+			})
+		}
+		)
+	}
+
 	render() {
+
 		return (
-			<View style={styles.container}>
-				<Text>Menu</Text>
-				{/* <TextInput onChangeText={(input) => { this.setState({ textInput: input }) }} /> */}
-				<View style={{ flexDirection: 'row' }}>
-					<Text>Naveen's Tea Shop</Text>
-					<Picker
-						selectedValue={this.state.naveenPartition}
-						style={{ height: 50, width: 150 }}
-						onValueChange={(itemValue, itemIndex) => {
-							this.setState({ naveenPartition: itemValue })
-
-						}}
-					>
-						<Picker.Item label="Partition A" value="A" />
-						<Picker.Item label="Partition B" value="B" />
-					</Picker>
+			<View>
+				<View style={styles.container}>
+					<Text>Menu</Text>
 				</View>
-				<FlatList style={{ width: '100%' }}
-					data={this.state.naveenlist}
-					keyExtractor={(item) => item.key}
-					renderItem={({ item }) => {
-						return (
-							<View style={{ flexDirection: 'row' }}>
-								<Text>{item.name} {" :  Rs."} {item.price}</Text>
-								<TouchableOpacity style={styles.button} onPress={() => { this.spendMoney(item.name, item.price, "Naveen's Tea Shop", this.state.naveenPartition) }}>
-									<Text>  >  </Text>
-								</TouchableOpacity>
-
-							</View>)
-					}} />
-				<View style={{ flexDirection: 'row' }}>
-					<Text>Surya Tuck Shop</Text>
-					<Picker
-						selectedValue={this.state.suryaPartition}
-						style={{ height: 50, width: 150 }}
-						onValueChange={(itemValue, itemIndex) => {
-							this.setState({ suryaPartition: itemValue })
-
-						}}
-					>
-						<Picker.Item label="Partition A" value="A" />
-						<Picker.Item label="Partition B" value="B" />
-					</Picker>
-				</View>
-				<FlatList style={{ width: '100%' }}
-					data={this.state.suryalist}
-					keyExtractor={(item) => item.key}
-					renderItem={({ item }) => {
-						return (
-							<View style={{ flexDirection: 'row' }}>
-								<Text>{item.name} {" :  Rs."} {item.price}</Text>
-								{/* <Button title=">" onPress={() => { console.log("Button pressed") }} /> */}
-								<TouchableOpacity style={styles.button} onPress={() => { this.spendMoney(item.name, item.price, "Surya Tuck Shop", this.state.naveenPartition) }} >
-									<Text>  >  </Text>
-								</TouchableOpacity>
-
-							</View>)
-					}} />
-
-				{/* <Button title="check text input" onPress={() => { this.checkInput() }} /> */}
-				<Button title="Check text input" onPress={() => { this.checkInput() }} />
+				{this.displayShopInfo()}
 				<Button title="Logout" onPress={() => { this.logout() }} />
+
 			</View>
 		);
 	}
@@ -244,5 +239,6 @@ const styles = StyleSheet.create({
 		margin: 20,
 		//position: 'absolute',
 		//right: 0,
+		height: 15,
 	},
 });
